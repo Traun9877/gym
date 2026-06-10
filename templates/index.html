@@ -1,0 +1,1585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Fitness Trainer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    color: #333;
+}
+
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 40px;
+    color: white;
+}
+
+.header h1 {
+    font-size: 3rem;
+    margin-bottom: 10px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+.header .subtitle {
+    font-size: 1.2rem;
+    opacity: 0.9;
+}
+
+.exercise-selection {
+    background: white;
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+.exercise-selection h2 {
+    font-size: 2rem;
+    margin-bottom: 30px;
+    color: #333;
+}
+
+.exercise-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+    margin-top: 30px;
+}
+
+.exercise-card {
+    background: linear-gradient(145deg, #f0f0f0, #ffffff);
+    padding: 40px 30px;
+    border-radius: 15px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 3px solid transparent;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+.exercise-card:hover {
+    transform: translateY(-10px);
+    border-color: #667eea;
+    box-shadow: 0 20px 40px rgba(102, 126, 234, 0.3);
+}
+
+.exercise-card.selected {
+    border-color: #667eea;
+    background: linear-gradient(145deg, #667eea, #764ba2);
+    color: white;
+}
+
+.exercise-icon {
+    font-size: 3rem;
+    margin-bottom: 20px;
+    color: #667eea;
+}
+
+.exercise-card.selected .exercise-icon {
+    color: white;
+}
+
+.exercise-card h3 {
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+}
+
+.exercise-card p {
+    opacity: 0.7;
+    line-height: 1.5;
+}
+
+.workout-area {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 30px;
+    margin-top: 30px;
+}
+
+.video-section {
+    background: white;
+    padding: 20px;
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+}
+
+.video-container {
+    position: relative;
+    background: #000;
+    border-radius: 15px;
+    overflow: hidden;
+    margin-bottom: 20px;
+    aspect-ratio: 16/9;
+}
+
+#videoFeed {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.video-overlay {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background: rgba(0,0,0,0.7);
+    padding: 10px 20px;
+    border-radius: 25px;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+#statusDot {
+    color: #ff4757;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+#statusDot.connected {
+    color: #2ed573;
+    animation: none;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.video-controls {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+}
+
+.btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 25px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-danger {
+    background: linear-gradient(145deg, #ff4757, #ff3742);
+    color: white;
+}
+
+.btn-danger:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(255, 71, 87, 0.3);
+}
+
+.btn-secondary {
+    background: linear-gradient(145deg, #57606f, #4a515b);
+    color: white;
+}
+
+.btn-secondary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(87, 96, 111, 0.3);
+}
+
+.stats-section {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.info-card {
+    background: white;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    border-left: 5px solid #667eea;
+}
+
+.info-card h3 {
+    font-size: 1.3rem;
+    margin-bottom: 20px;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.exercise-details {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.detail-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.detail-item:last-child {
+    border-bottom: none;
+}
+
+.label {
+    font-weight: 600;
+    color: #666;
+}
+
+.value {
+    font-weight: 700;
+    color: #333;
+    font-size: 1.1rem;
+}
+
+.stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+    gap: 20px;
+    text-align: center;
+}
+
+.stat-item {
+    padding: 15px 10px;
+    background: linear-gradient(145deg, #f8f9fa, #e9ecef);
+    border-radius: 12px;
+}
+
+.stat-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #667eea;
+    margin-bottom: 5px;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    color: #666;
+    font-weight: 600;
+}
+
+.dual-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+.arm-stats h4 {
+    font-size: 1.1rem;
+    margin-bottom: 15px;
+    color: #667eea;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.warning-card {
+    border-left-color: #ff4757;
+}
+
+.warning-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    background: linear-gradient(145deg, #fff5f5, #ffe6e6);
+    border-radius: 8px;
+    margin-bottom: 10px;
+    color: #d63031;
+}
+
+.warning-item:last-child {
+    margin-bottom: 0;
+}
+
+.warning-text {
+    font-weight: 600;
+}
+
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.loading-content {
+    text-align: center;
+    color: white;
+}
+
+.spinner {
+    width: 60px;
+    height: 60px;
+    border: 4px solid rgba(255,255,255,0.3);
+    border-top: 4px solid white;
+    border-radius: 50%;
+    margin: 0 auto 20px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 15px 25px;
+    border-radius: 8px;
+    color: white;
+    font-weight: 600;
+    z-index: 1001;
+    transform: translateX(400px);
+    transition: all 0.3s ease;
+}
+
+.notification.show {
+    transform: translateX(0);
+}
+
+.notification.success {
+    background: linear-gradient(145deg, #00b894, #00a085);
+}
+
+.notification.error {
+    background: linear-gradient(145deg, #d63031, #c0392b);
+}
+
+/* Source Selection Styles */
+.source-selection {
+    margin-top: 40px;
+    padding: 30px;
+    border-top: 2px solid #eee;
+}
+
+.source-selection h3 {
+    text-align: center;
+    margin-bottom: 30px;
+    color: #333;
+    font-size: 1.8rem;
+}
+
+.source-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 30px;
+    margin-bottom: 30px;
+}
+
+.source-card {
+    background: linear-gradient(145deg, #f8f9fa, #ffffff);
+    padding: 30px 20px;
+    border-radius: 15px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 3px solid transparent;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+.source-card:hover {
+    transform: translateY(-5px);
+    border-color: #667eea;
+    box-shadow: 0 15px 30px rgba(102, 126, 234, 0.2);
+}
+
+.source-card.selected {
+    border-color: #667eea;
+    background: linear-gradient(145deg, #667eea, #764ba2);
+    color: white;
+}
+
+.source-icon {
+    font-size: 2.5rem;
+    margin-bottom: 15px;
+    color: #667eea;
+}
+
+.source-card.selected .source-icon {
+    color: white;
+}
+
+.source-card h4 {
+    font-size: 1.3rem;
+    margin-bottom: 10px;
+}
+
+.source-card p {
+    opacity: 0.7;
+    line-height: 1.4;
+}
+
+/* Video Upload Styles */
+.video-upload {
+    margin: 30px 0;
+}
+
+.upload-area {
+    border: 3px dashed #ccc;
+    border-radius: 15px;
+    padding: 40px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: linear-gradient(145deg, #f8f9fa, #ffffff);
+}
+
+.upload-area:hover {
+    border-color: #667eea;
+    background: linear-gradient(145deg, #667eea, #764ba2);
+    color: white;
+}
+
+.upload-area.dragover {
+    border-color: #667eea;
+    background: rgba(102, 126, 234, 0.1);
+}
+
+.upload-icon {
+    font-size: 3rem;
+    color: #667eea;
+    margin-bottom: 15px;
+}
+
+.upload-area:hover .upload-icon {
+    color: white;
+}
+
+.upload-link {
+    color: #667eea;
+    font-weight: 600;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.upload-area:hover .upload-link {
+    color: white;
+}
+
+.upload-hint {
+    font-size: 0.9rem;
+    opacity: 0.7;
+    margin-top: 10px;
+}
+
+.upload-progress {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+}
+
+.progress-bar {
+    width: 100%;
+    height: 20px;
+    background: #e0e0e0;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+    width: 0%;
+    transition: width 0.3s ease;
+    border-radius: 10px;
+}
+
+.progress-text {
+    font-weight: 600;
+    color: #333;
+}
+
+.source-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.btn-primary {
+    background: linear-gradient(145deg, #667eea, #764ba2);
+    color: white;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+}
+
+/* Video Playback Controls */
+.video-playback-controls {
+    background: rgba(0,0,0,0.8);
+    padding: 15px 20px;
+    border-radius: 10px;
+    margin-top: 15px;
+    color: white;
+}
+
+.playback-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    font-size: 0.9rem;
+}
+
+.progress-percentage {
+    font-weight: 600;
+    color: #667eea;
+}
+
+.playback-slider {
+    width: 100%;
+}
+
+.playback-slider input[type="range"] {
+    width: 100%;
+    height: 6px;
+    border-radius: 3px;
+    background: rgba(255,255,255,0.3);
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.playback-slider input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #667eea;
+    cursor: pointer;
+    border: 2px solid white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.playback-slider input[type="range"]::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #667eea;
+    cursor: pointer;
+    border: 2px solid white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .workout-area {
+        grid-template-columns: 1fr;
+    }
+    
+    .stats-section {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+    }
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding: 15px;
+    }
+    
+    .header h1 {
+        font-size: 2rem;
+    }
+    
+    .exercise-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .exercise-card {
+        padding: 30px 20px;
+    }
+    
+    .video-section,
+    .exercise-selection {
+        padding: 20px;
+    }
+    
+    .dual-stats {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+    }
+    
+    .stat-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+    }
+}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1><i class="fas fa-dumbbell"></i> AI Fitness Trainer</h1>
+            <p class="subtitle">Real-time Exercise Form Analysis</p>
+        </header>
+
+        <div class="main-content">
+            <!-- Exercise Selection -->
+            <div class="exercise-selection" id="exerciseSelection">
+                <h2>Select Your Exercise</h2>
+                <div class="exercise-grid">
+                    <div class="exercise-card" data-exercise="squat">
+                        <div class="exercise-icon">
+                            <i class="fas fa-walking"></i>
+                        </div>
+                        <h3>Squat</h3>
+                        <p>Lower body strength & mobility</p>
+                    </div>
+                    <div class="exercise-card" data-exercise="hammer_curl">
+                        <div class="exercise-icon">
+                            <i class="fas fa-fist-raised"></i>
+                        </div>
+                        <h3>Hammer Curl</h3>
+                        <p>Bicep and forearm strength</p>
+                    </div>
+                    <div class="exercise-card" data-exercise="push_up">
+                        <div class="exercise-icon">
+                            <i class="fas fa-arrow-up"></i>
+                        </div>
+                        <h3>Push Up</h3>
+                        <p>Upper body compound movement</p>
+                    </div>
+                </div>
+                
+                <!-- Source Selection -->
+                <div class="source-selection" id="sourceSelection" style="display: none;">
+                    <h3>Select Video Source</h3>
+                    <div class="source-options">
+                        <div class="source-card" data-source="camera">
+                            <div class="source-icon">
+                                <i class="fas fa-video"></i>
+                            </div>
+                            <h4>Live Camera</h4>
+                            <p>Use your webcam for real-time analysis</p>
+                        </div>
+                        <div class="source-card" data-source="video">
+                            <div class="source-icon">
+                                <i class="fas fa-file-video"></i>
+                            </div>
+                            <h4>Upload Video</h4>
+                            <p>Analyze a pre-recorded video file</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Video Upload -->
+                    <div class="video-upload" id="videoUpload" style="display: none;">
+                        <div class="upload-area" id="uploadArea">
+                            <div class="upload-icon">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                            </div>
+                            <p>Drop your video file here or <span class="upload-link">browse</span></p>
+                            <p class="upload-hint">Supported formats: MP4, AVI, MOV, MKV, WMV, FLV, WEBM</p>
+                            <input type="file" id="videoFileInput" accept="video/*" style="display: none;">
+                        </div>
+                        <div class="upload-progress" id="uploadProgress" style="display: none;">
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="progressFill"></div>
+                            </div>
+                            <span class="progress-text" id="progressText">0%</span>
+                        </div>
+                    </div>
+                    
+                    <div class="source-actions">
+                        <button class="btn btn-secondary" id="backToExerciseBtn">
+                            <i class="fas fa-arrow-left"></i> Back to Exercises
+                        </button>
+                        <button class="btn btn-primary" id="startWorkoutBtn" style="display: none;">
+                            <i class="fas fa-play"></i> Start Workout
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Video Feed and Data -->
+            <div class="workout-area" id="workoutArea" style="display: none;">
+                <div class="video-section">
+                    <div class="video-container">
+                        <img id="videoFeed" src="" alt="Video Feed" />
+                        <!-- <div class="video-overlay" id="videoOverlay"> -->
+                            <!-- <div class="status-indicator"> -->
+                                <!-- <i class="fas fa-circle" id="statusDot"></i> -->
+                                <!-- <span id="statusText">Connecting...</span> -->
+                            <!-- </div> -->
+                        <!-- </div> -->
+                    </div>
+                    
+                    
+                    <div class="video-controls">
+                        <button class="btn btn-danger" id="stopBtn">
+                            <i class="fas fa-stop"></i> Stop Exercise
+                        </button>
+                        <button class="btn btn-secondary" id="backBtn">
+                            <i class="fas fa-arrow-left"></i> Choose Different Exercise
+                        </button>
+                        
+                        <!-- Video Controls (only shown for video files) -->
+                        <div class="video-playback-controls" id="videoPlaybackControls" style="display: none;">
+                            <div class="playback-info">
+                                <span id="currentFrame">0</span> / <span id="totalFrames">0</span> frames
+                                <span class="progress-percentage" id="progressPercentage">0%</span>
+                            </div>
+                            <div class="playback-slider">
+                                <input type="range" id="frameSlider" min="0" max="100" value="0" step="1">
+                            </div>
+                        </div>
+                        
+                        <!-- Video Controls (only shown for video files) -->
+                        <div class="video-playback-controls" id="videoPlaybackControls" style="display: none;">
+                            <div class="playback-info">
+                                <span id="currentFrame">0</span> / <span id="totalFrames">0</span> frames
+                                <span class="progress-percentage" id="progressPercentage">0%</span>
+                            </div>
+                            <div class="playback-slider">
+                                <input type="range" id="frameSlider" min="0" max="100" value="0" step="1">
+                            </div><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Fitness Trainer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1><i class="fas fa-dumbbell"></i> AI Fitness Trainer</h1>
+            <p class="subtitle">Real-time Exercise Form Analysis</p>
+        </header>
+
+        <div class="main-content">
+            <!-- Exercise Selection -->
+            <div class="exercise-selection" id="exerciseSelection">
+                <h2>Select Your Exercise</h2>
+                <div class="exercise-grid">
+                    <div class="exercise-card" data-exercise="squat">
+                        <div class="exercise-icon">
+                            <i class="fas fa-walking"></i>
+                        </div>
+                        <h3>Squat</h3>
+                        <p>Lower body strength & mobility</p>
+                    </div>
+                    <div class="exercise-card" data-exercise="hammer_curl">
+                        <div class="exercise-icon">
+                            <i class="fas fa-fist-raised"></i>
+                        </div>
+                        <h3>Hammer Curl</h3>
+                        <p>Bicep and forearm strength</p>
+                    </div>
+                    <div class="exercise-card" data-exercise="push_up">
+                        <div class="exercise-icon">
+                            <i class="fas fa-arrow-up"></i>
+                        </div>
+                        <h3>Push Up</h3>
+                        <p>Upper body compound movement</p>
+                    </div>
+                </div>
+                
+                <!-- Source Selection -->
+                <div class="source-selection" id="sourceSelection" style="display: none;">
+                    <h3>Select Video Source</h3>
+                    <div class="source-options">
+                        <div class="source-card" data-source="camera">
+                            <div class="source-icon">
+                                <i class="fas fa-video"></i>
+                            </div>
+                            <h4>Live Camera</h4>
+                            <p>Use your webcam for real-time analysis</p>
+                        </div>
+                        <div class="source-card" data-source="video">
+                            <div class="source-icon">
+                                <i class="fas fa-file-video"></i>
+                            </div>
+                            <h4>Upload Video</h4>
+                            <p>Analyze a pre-recorded video file</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Video Upload -->
+                    <div class="video-upload" id="videoUpload" style="display: none;">
+                        <div class="upload-area" id="uploadArea">
+                            <div class="upload-icon">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                            </div>
+                            <p>Drop your video file here or <span class="upload-link">browse</span></p>
+                            <p class="upload-hint">Supported formats: MP4, AVI, MOV, MKV, WMV, FLV, WEBM</p>
+                            <input type="file" id="videoFileInput" accept="video/*" style="display: none;">
+                        </div>
+                        <div class="upload-progress" id="uploadProgress" style="display: none;">
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="progressFill"></div>
+                            </div>
+                            <span class="progress-text" id="progressText">0%</span>
+                        </div>
+                    </div>
+                    
+                    <div class="source-actions">
+                        <button class="btn btn-secondary" id="backToExerciseBtn">
+                            <i class="fas fa-arrow-left"></i> Back to Exercises
+                        </button>
+                        <button class="btn btn-primary" id="startWorkoutBtn" style="display: none;">
+                            <i class="fas fa-play"></i> Start Workout
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Video Feed and Data -->
+            <div class="workout-area" id="workoutArea" style="display: none;">
+                <div class="video-section">
+                    <div class="video-container">
+                        <img id="videoFeed" src="" alt="Video Feed" />
+                        <div class="video-overlay" id="videoOverlay">
+                            <div class="status-indicator">
+                                <i class="fas fa-circle" id="statusDot"></i>
+                                <span id="statusText">Connecting...</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="video-controls">
+                        <button class="btn btn-danger" id="stopBtn">
+                            <i class="fas fa-stop"></i> Stop Exercise
+                        </button>
+                        <button class="btn btn-secondary" id="backBtn">
+                            <i class="fas fa-arrow-left"></i> Choose Different Exercise
+                        </button>
+                    </div>
+                </div>
+
+                <div class="stats-section">
+                    <!-- Exercise Info -->
+                    <div class="info-card exercise-info-card">
+                        <h3><i class="fas fa-info-circle"></i> Exercise Info</h3>
+                        <div class="exercise-details">
+                            <div class="detail-item">
+                                <span class="label">Exercise:</span>
+                                <span class="value" id="exerciseName">-</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="label">Target Reps:</span>
+                                <span class="value" id="targetReps">-</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="label">Target Sets:</span>
+                                <span class="value" id="targetSets">-</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Single Exercise Stats (Squat, Push-up) -->
+                    <div class="info-card stats-card" id="singleStats" style="display: none;">
+                        <h3><i class="fas fa-chart-line"></i> Performance</h3>
+                        <div class="stat-grid">
+                            <div class="stat-item">
+                                <div class="stat-value" id="repCounter">0</div>
+                                <div class="stat-label">Reps</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value" id="currentAngle">0°</div>
+                                <div class="stat-label">Angle</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value" id="currentStage">Waiting</div>
+                                <div class="stat-label">Stage</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dual Exercise Stats (Hammer Curl) -->
+                    <div class="info-card stats-card" id="dualStats" style="display: none;">
+                        <h3><i class="fas fa-chart-line"></i> Performance</h3>
+                        <div class="dual-stats">
+                            <div class="arm-stats">
+                                <h4><i class="fas fa-hand-paper"></i> Left Arm</h4>
+                                <div class="stat-grid">
+                                    <div class="stat-item">
+                                        <div class="stat-value" id="leftReps">0</div>
+                                        <div class="stat-label">Reps</div>
+                                    </div>
+                                    <div class="stat-item">
+                                        <div class="stat-value" id="leftAngle">0°</div>
+                                        <div class="stat-label">Angle</div>
+                                    </div>
+                                    <div class="stat-item">
+                                        <div class="stat-value" id="leftStage">Waiting</div>
+                                        <div class="stat-label">Stage</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="arm-stats">
+                                <h4><i class="fas fa-hand-paper"></i> Right Arm</h4>
+                                <div class="stat-grid">
+                                    <div class="stat-item">
+                                        <div class="stat-value" id="rightReps">0</div>
+                                        <div class="stat-label">Reps</div>
+                                    </div>
+                                    <div class="stat-item">
+                                        <div class="stat-value" id="rightAngle">0°</div>
+                                        <div class="stat-label">Angle</div>
+                                    </div>
+                                    <div class="stat-item">
+                                        <div class="stat-value" id="rightStage">Waiting</div>
+                                        <div class="stat-label">Stage</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Warnings -->
+                    <div class="info-card warning-card" id="warningCard" style="display: none;">
+                        <h3><i class="fas fa-exclamation-triangle"></i> Form Feedback</h3>
+                        <div id="warningMessages">
+                            <div class="warning-item" id="leftWarning" style="display: none;">
+                                <i class="fas fa-hand-paper"></i>
+                                <span class="warning-text" id="leftWarningText"></span>
+                            </div>
+                            <div class="warning-item" id="rightWarning" style="display: none;">
+                                <i class="fas fa-hand-paper"></i>
+                                <span class="warning-text" id="rightWarningText"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Overlay -->
+        <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+            <div class="loading-content">
+                <div class="spinner"></div>
+                <p>Starting your workout session...</p>
+            </div>
+        </div>
+
+        <!-- Notifications -->
+        <div class="notification" id="notification"></div>
+    </div>
+    <script>
+        class FitnessTrainer {
+    constructor() {
+        this.isRunning = false;
+        this.currentExercise = null;
+        this.frameInterval = null;
+        this.frameRate = 10; // FPS for video updates
+        
+        this.initializeElements();
+        this.bindEvents();
+    }
+    
+    initializeElements() {
+        // Main sections
+        this.exerciseSelection = document.getElementById('exerciseSelection');
+        this.sourceSelection = document.getElementById('sourceSelection');
+        this.workoutArea = document.getElementById('workoutArea');
+        this.loadingOverlay = document.getElementById('loadingOverlay');
+        
+        // Exercise cards
+        this.exerciseCards = document.querySelectorAll('.exercise-card');
+        
+        // Source selection elements
+        this.sourceCards = document.querySelectorAll('.source-card');
+        this.videoUpload = document.getElementById('videoUpload');
+        this.uploadArea = document.getElementById('uploadArea');
+        this.videoFileInput = document.getElementById('videoFileInput');
+        this.uploadProgress = document.getElementById('uploadProgress');
+        this.progressFill = document.getElementById('progressFill');
+        this.progressText = document.getElementById('progressText');
+        
+        // Control buttons
+        this.backToExerciseBtn = document.getElementById('backToExerciseBtn');
+        this.startWorkoutBtn = document.getElementById('startWorkoutBtn');
+        this.stopBtn = document.getElementById('stopBtn');
+        this.backBtn = document.getElementById('backBtn');
+        
+        // Video elements
+        this.videoFeed = document.getElementById('videoFeed');
+        this.statusDot = document.getElementById('statusDot');
+        this.statusText = document.getElementById('statusText');
+        
+        // Video playback controls
+        this.videoPlaybackControls = document.getElementById('videoPlaybackControls');
+        this.currentFrame = document.getElementById('currentFrame');
+        this.totalFrames = document.getElementById('totalFrames');
+        this.progressPercentage = document.getElementById('progressPercentage');
+        this.frameSlider = document.getElementById('frameSlider');
+        
+        // Info elements
+        this.exerciseName = document.getElementById('exerciseName');
+        this.targetReps = document.getElementById('targetReps');
+        this.targetSets = document.getElementById('targetSets');
+        
+        // Stats elements - Single exercise (squat, push-up)
+        this.singleStats = document.getElementById('singleStats');
+        this.repCounter = document.getElementById('repCounter');
+        this.currentAngle = document.getElementById('currentAngle');
+        this.currentStage = document.getElementById('currentStage');
+        
+        // Stats elements - Dual exercise (hammer curl)
+        this.dualStats = document.getElementById('dualStats');
+        this.leftReps = document.getElementById('leftReps');
+        this.leftAngle = document.getElementById('leftAngle');
+        this.leftStage = document.getElementById('leftStage');
+        this.rightReps = document.getElementById('rightReps');
+        this.rightAngle = document.getElementById('rightAngle');
+        this.rightStage = document.getElementById('rightStage');
+        
+        // Warning elements
+        this.warningCard = document.getElementById('warningCard');
+        this.leftWarning = document.getElementById('leftWarning');
+        this.rightWarning = document.getElementById('rightWarning');
+        this.leftWarningText = document.getElementById('leftWarningText');
+        this.rightWarningText = document.getElementById('rightWarningText');
+        
+        // Notification
+        this.notification = document.getElementById('notification');
+    }
+    
+    bindEvents() {
+        // Exercise card selection
+        this.exerciseCards.forEach(card => {
+            card.addEventListener('click', () => {
+                const exerciseType = card.dataset.exercise;
+                this.selectExercise(exerciseType);
+            });
+        });
+        
+        // Source selection
+        this.sourceCards.forEach(card => {
+            card.addEventListener('click', () => {
+                const sourceType = card.dataset.source;
+                this.selectSource(sourceType);
+            });
+        });
+        
+        // Video upload events
+        this.uploadArea.addEventListener('click', () => this.videoFileInput.click());
+        this.uploadArea.addEventListener('dragover', (e) => this.handleDragOver(e));
+        this.uploadArea.addEventListener('dragleave', (e) => this.handleDragLeave(e));
+        this.uploadArea.addEventListener('drop', (e) => this.handleDrop(e));
+        this.videoFileInput.addEventListener('change', (e) => this.handleFileSelect(e));
+        
+        // Control buttons
+        this.backToExerciseBtn.addEventListener('click', () => this.backToExerciseSelection());
+        this.startWorkoutBtn.addEventListener('click', () => this.startWorkout());
+        this.stopBtn.addEventListener('click', () => this.stopExercise());
+        this.backBtn.addEventListener('click', () => this.backToSelection());
+        
+        // Video playback controls
+        this.frameSlider.addEventListener('input', (e) => this.seekToFrame(e.target.value));
+    }
+    
+    selectExercise(exerciseType) {
+        // Remove previous selections
+        this.exerciseCards.forEach(card => card.classList.remove('selected'));
+        
+        // Select current card
+        const selectedCard = document.querySelector(`[data-exercise="${exerciseType}"]`);
+        selectedCard.classList.add('selected');
+        
+        this.currentExercise = exerciseType;
+        
+        // Show source selection
+        setTimeout(() => {
+            this.showSourceSelection();
+        }, 500);
+    }
+    
+    selectSource(sourceType) {
+        // Remove previous selections
+        this.sourceCards.forEach(card => card.classList.remove('selected'));
+        
+        // Select current card
+        const selectedCard = document.querySelector(`[data-source="${sourceType}"]`);
+        selectedCard.classList.add('selected');
+        
+        this.selectedSource = sourceType;
+        
+        if (sourceType === 'video') {
+            this.videoUpload.style.display = 'block';
+            this.startWorkoutBtn.style.display = 'none';
+        } else {
+            this.videoUpload.style.display = 'none';
+            this.startWorkoutBtn.style.display = 'inline-flex';
+        }
+    }
+    
+    handleDragOver(e) {
+        e.preventDefault();
+        this.uploadArea.classList.add('dragover');
+    }
+    
+    handleDragLeave(e) {
+        e.preventDefault();
+        this.uploadArea.classList.remove('dragover');
+    }
+    
+    handleDrop(e) {
+        e.preventDefault();
+        this.uploadArea.classList.remove('dragover');
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            this.uploadVideo(files[0]);
+        }
+    }
+    
+    handleFileSelect(e) {
+        const files = e.target.files;
+        if (files.length > 0) {
+            this.uploadVideo(files[0]);
+        }
+    }
+    
+    async uploadVideo(file) {
+        // Check file type
+        const allowedTypes = ['mp4', 'avi', 'mov', 'mkv', 'wmv', 'flv', 'webm'];
+        const fileExtension = file.name.split('.').pop().toLowerCase();
+        
+        if (!allowedTypes.includes(fileExtension)) {
+            this.showNotification('Invalid file type. Please select a video file.', 'error');
+            return;
+        }
+        
+        const formData = new FormData();
+        formData.append('video', file);
+        
+        // Show progress
+        this.uploadProgress.style.display = 'block';
+        this.progressFill.style.width = '0%';
+        this.progressText.textContent = '0%';
+        
+        try {
+            const xhr = new XMLHttpRequest();
+            
+            xhr.upload.addEventListener('progress', (e) => {
+                if (e.lengthComputable) {
+                    const percentComplete = Math.round((e.loaded / e.total) * 100);
+                    this.progressFill.style.width = percentComplete + '%';
+                    this.progressText.textContent = percentComplete + '%';
+                }
+            });
+            
+            xhr.addEventListener('load', () => {
+                if (xhr.status === 200) {
+                    const response = JSON.parse(xhr.responseText);
+                    if (response.success) {
+                        this.uploadedVideoPath = response.filepath;
+                        this.showNotification('Video uploaded successfully!', 'success');
+                        this.startWorkoutBtn.style.display = 'inline-flex';
+                    } else {
+                        this.showNotification(response.message, 'error');
+                    }
+                } else {
+                    this.showNotification('Upload failed. Please try again.', 'error');
+                }
+                this.uploadProgress.style.display = 'none';
+            });
+            
+            xhr.addEventListener('error', () => {
+                this.showNotification('Upload failed. Please try again.', 'error');
+                this.uploadProgress.style.display = 'none';
+            });
+            
+            xhr.open('POST', '/upload_video');
+            xhr.send(formData);
+            
+        } catch (error) {
+            console.error('Upload error:', error);
+            this.showNotification('Upload failed. Please try again.', 'error');
+            this.uploadProgress.style.display = 'none';
+        }
+    }
+    
+    backToExerciseSelection() {
+        this.showExerciseSelection();
+        this.sourceCards.forEach(card => card.classList.remove('selected'));
+        this.selectedSource = null;
+        this.uploadedVideoPath = null;
+        this.videoUpload.style.display = 'none';
+        this.startWorkoutBtn.style.display = 'none';
+    }
+    
+    async startWorkout() {
+        this.showLoading(true);
+        
+        try {
+            const requestData = {
+                exercise_type: this.currentExercise,
+                source_type: this.selectedSource || 'camera'
+            };
+            
+            if (this.selectedSource === 'video' && this.uploadedVideoPath) {
+                requestData.video_path = this.uploadedVideoPath;
+            }
+            
+            const response = await fetch('/start_exercise', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestData)
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                this.showNotification('Exercise started successfully!', 'success');
+                this.isRunning = true;
+                this.updateExerciseInfo(result.exercise_info);
+                this.updateVideoInfo(result.video_info);
+                this.showWorkoutArea();
+                this.startVideoFeed();
+            } else {
+                this.showNotification(result.message, 'error');
+                this.showLoading(false);
+            }
+        } catch (error) {
+            console.error('Error starting exercise:', error);
+            this.showNotification('Failed to start exercise. Please try again.', 'error');
+            this.showLoading(false);
+        }
+    }
+    
+    async seekToFrame(frameNumber) {
+        try {
+            const response = await fetch('/seek_video', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ frame_number: parseInt(frameNumber) })
+            });
+            
+            const result = await response.json();
+            if (!result.success) {
+                console.error('Failed to seek:', result.message);
+            }
+        } catch (error) {
+            console.error('Error seeking video:', error);
+        }
+    }
+    
+    async startExercise(exerciseType) {
+        this.showLoading(true);
+        
+        try {
+            const response = await fetch('/start_exercise', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ exercise_type: exerciseType })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                this.showNotification('Exercise started successfully!', 'success');
+                this.isRunning = true;
+                this.updateExerciseInfo(result.exercise_info);
+                this.showWorkoutArea();
+                this.startVideoFeed();
+            } else {
+                this.showNotification(result.message, 'error');
+                this.showLoading(false);
+            }
+        } catch (error) {
+            console.error('Error starting exercise:', error);
+            this.showNotification('Failed to start exercise. Please try again.', 'error');
+            this.showLoading(false);
+        }
+    }
+    
+    async stopExercise() {
+        try {
+            const response = await fetch('/stop_exercise', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                this.showNotification('Exercise stopped', 'info');
+                this.isRunning = false;
+                this.stopVideoFeed();
+                this.updateStatus('disconnected');
+            }
+        } catch (error) {
+            console.error('Error stopping exercise:', error);
+            this.showNotification('Error stopping exercise', 'error');
+        }
+    }
+    
+    backToSelection() {
+        this.stopExercise();
+        this.backToExerciseSelection();
+        this.exerciseCards.forEach(card => card.classList.remove('selected'));
+        this.currentExercise = null;
+        this.selectedSource = null;
+        this.uploadedVideoPath = null;
+    }
+    
+    startVideoFeed() {
+        this.updateStatus('connected');
+        
+        // Start fetching frames at specified frame rate
+        this.frameInterval = setInterval(() => {
+            this.fetchFrame();
+        }, 1000 / this.frameRate);
+    }
+    
+    stopVideoFeed() {
+        if (this.frameInterval) {
+            clearInterval(this.frameInterval);
+            this.frameInterval = null;
+        }
+    }
+    
+    async fetchFrame() {
+        if (!this.isRunning) return;
+        
+        try {
+            const response = await fetch('/get_frame');
+            const result = await response.json();
+            
+            if (result.success) {
+                // Update video feed
+                this.videoFeed.src = 'data:image/jpeg;base64,' + result.frame;
+                
+                // Update exercise data
+                this.updateExerciseData(result.exercise_data);
+                this.updateExerciseInfo(result.exercise_info);
+                this.updateVideoInfo(result.video_info);
+            } else {
+                if (result.video_ended) {
+                    this.showNotification('Video playback finished', 'info');
+                    this.updateStatus('disconnected');
+                    this.isRunning = false;
+                    this.stopVideoFeed();
+                } else {
+                    console.error('Failed to get frame:', result.message);
+                    this.updateStatus('error');
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching frame:', error);
+            this.updateStatus('error');
+        }
+    }
+    
+    updateVideoInfo(videoInfo) {
+        if (videoInfo && videoInfo.is_video_file) {
+            // Show video playback controls
+            this.videoPlaybackControls.style.display = 'block';
+            
+            // Update frame information
+            this.currentFrame.textContent = videoInfo.current_frame || 0;
+            this.totalFrames.textContent = videoInfo.total_frames || 0;
+            this.progressPercentage.textContent = Math.round(videoInfo.progress || 0) + '%';
+            
+            // Update slider
+            if (videoInfo.total_frames > 0) {
+                this.frameSlider.max = videoInfo.total_frames - 1;
+                this.frameSlider.value = videoInfo.current_frame || 0;
+            }
+        } else {
+            // Hide video playback controls for camera
+            this.videoPlaybackControls.style.display = 'none';
+        }
+    }
+    
+    updateExerciseData(data) {
+        if (this.currentExercise === 'hammer_curl') {
+            // Update dual stats for hammer curl
+            this.leftReps.textContent = data.counter_left || 0;
+            this.leftAngle.textContent = (data.angle_left || 0) + '°';
+            this.leftStage.textContent = data.stage_left || 'Waiting';
+            
+            this.rightReps.textContent = data.counter_right || 0;
+            this.rightAngle.textContent = (data.angle_right || 0) + '°';
+            this.rightStage.textContent = data.stage_right || 'Waiting';
+            
+            // Update warnings
+            this.updateWarnings(data.warning_left, data.warning_right);
+        } else {
+            // Update single stats for squat and push-up
+            this.repCounter.textContent = data.counter || 0;
+            this.currentAngle.textContent = (data.angle || 0) + '°';
+            this.currentStage.textContent = data.stage || 'Waiting';
+        }
+    }
+    
+    updateWarnings(leftWarning, rightWarning) {
+        // Show/hide warning card
+        const hasWarnings = leftWarning || rightWarning;
+        this.warningCard.style.display = hasWarnings ? 'block' : 'none';
+        
+        // Update left warning
+        if (leftWarning) {
+            this.leftWarning.style.display = 'flex';
+            this.leftWarningText.textContent = leftWarning;
+        } else {
+            this.leftWarning.style.display = 'none';
+        }
+        
+        // Update right warning
+        if (rightWarning) {
+            this.rightWarning.style.display = 'flex';
+            this.rightWarningText.textContent = rightWarning;
+        } else {
+            this.rightWarning.style.display = 'none';
+        }
+    }
+    
+    updateExerciseInfo(info) {
+        if (info) {
+            this.exerciseName.textContent = info.name || 'N/A';
+            this.targetReps.textContent = info.reps || 0;
+            this.targetSets.textContent = info.sets || 0;
+        }
+    }
+    
+    updateStatus(status) {
+        switch (status) {
+            case 'connected':
+                this.statusDot.classList.add('connected');
+                this.statusText.textContent = 'Connected';
+                break;
+            case 'disconnected':
+                this.statusDot.classList.remove('connected');
+                this.statusText.textContent = 'Disconnected';
+                break;
+            case 'error':
+                this.statusDot.classList.remove('connected');
+                this.statusText.textContent = 'Connection Error';
+                break;
+            default:
+                this.statusDot.classList.remove('connected');
+                this.statusText.textContent = 'Connecting...';
+        }
+    }
+    
+    showExerciseSelection() {
+        this.exerciseSelection.style.display = 'block';
+        this.sourceSelection.style.display = 'none';
+        this.workoutArea.style.display = 'none';
+        this.showLoading(false);
+    }
+    
+    showSourceSelection() {
+        this.exerciseSelection.style.display = 'block';
+        this.sourceSelection.style.display = 'block';
+        this.workoutArea.style.display = 'none';
+        this.showLoading(false);
+    }
+    
+    showWorkoutArea() {
+        this.exerciseSelection.style.display = 'none';
+        this.workoutArea.style.display = 'grid';
+        this.showLoading(false);
+        
+        // Show appropriate stats section based on exercise type
+        if (this.currentExercise === 'hammer_curl') {
+            this.singleStats.style.display = 'none';
+            this.dualStats.style.display = 'block';
+        } else {
+            this.singleStats.style.display = 'block';
+            this.dualStats.style.display = 'none';
+        }
+    }
+    
+    showLoading(show) {
+        this.loadingOverlay.style.display = show ? 'flex' : 'none';
+    }
+    
+    showNotification(message, type = 'info') {
+        this.notification.textContent = message;
+        this.notification.className = `notification ${type}`;
+        this.notification.classList.add('show');
+        
+        // Auto-hide notification after 3 seconds
+        setTimeout(() => {
+            this.notification.classList.remove('show');
+        }, 3000);
+    }
+}
+
+// Initialize the fitness trainer when the page loads
+document.addEventListener('DOMContentLoaded', () => {
+    window.fitnessTrainer = new FitnessTrainer();
+});
+
+// Handle page visibility changes to pause/resume video feed
+document.addEventListener('visibilitychange', () => {
+    if (window.fitnessTrainer) {
+        if (document.hidden) {
+            window.fitnessTrainer.stopVideoFeed();
+        } else if (window.fitnessTrainer.isRunning) {
+            window.fitnessTrainer.startVideoFeed();
+        }
+    }
+});
+
+// Handle beforeunload to cleanup
+window.addEventListener('beforeunload', () => {
+    if (window.fitnessTrainer && window.fitnessTrainer.isRunning) {
+        window.fitnessTrainer.stopExercise();
+    }
+});
+
+
+    </script>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

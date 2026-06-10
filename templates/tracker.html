@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Fitness Tracker - {{ exercise.replace('_', ' ').title() }}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            color: white;
+            overflow-x: hidden;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            text-transform: capitalize;
+        }
+
+        .exercise-info {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+
+        .info-item {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 20px;
+            padding: 20px;
+            height: calc(100vh - 120px);
+        }
+
+        .video-section {
+            position: relative;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .video-feed {
+            max-width: 100%;
+            max-height: 100%;
+            border-radius: 15px;
+            object-fit: contain;
+        }
+
+        .video-overlay {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px 15px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+        }
+
+        .stats-panel {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            height: fit-content;
+        }
+
+        .stats-header {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+            font-weight: bold;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            text-align: center;
+            transition: transform 0.2s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #4ade80;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .angle-display {
+            background: linear-gradient(45deg, #f59e0b, #ef4444);
+            color: white;
+        }
+
+        .counter-display {
+            background: linear-gradient(45deg, #10b981, #3b82f6);
+            color: white;
+        }
+
+        .stage-display {
+            background: linear-gradient(45deg, #8b5cf6, #ec4899);
+            color: white;
+            text-transform: capitalize;
+        }
+
+        .warning-display {
+            background: linear-gradient(45deg, #ef4444, #dc2626);
+            color: white;
+            font-size: 0.8rem;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            min-height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4ade80, #22c55e);
+            transition: width 0.3s ease;
+            border-radius: 10px;
+        }
+
+        .controls {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            z-index: 1000;
+        }
+
+        .control-btn {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border: none;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .control-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .stop-btn {
+            background: linear-gradient(45deg, #ef4444, #dc2626);
+        }
+
+        .stop-btn:hover {
+            background: linear-gradient(45deg, #dc2626, #b91c1c);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            font-size: 1.2rem;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid white;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                grid-template-rows: 1fr auto;
+            }
+            
+            .stats-panel {
+                height: auto;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                padding: 15px;
+            }
+            
+            .header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .exercise-info {
+                gap: 15px;
+            }
+            
+            .info-item {
+                padding: 8px 15px;
+                font-size: 0.9rem;
+            }
+            
+            .main-content {
+                padding: 15px;
+            }
+            
+            .controls {
+                bottom: 15px;
+                gap: 10px;
+            }
+            
+            .control-btn {
+                padding: 12px 20px;
+                font-size: 0.9rem;
+            }
+        }
+
+        .dual-arm-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .arm-label {
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 10px;
+            padding: 5px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🏋️ {{ exercise.replace('_', ' ').title() }} Tracker</h1>
+        <div class="exercise-info">
+            <div class="info-item">🎯 Target: {{ exercise_info.get('reps', 'N/A') }} reps</div>
+            <div class="info-item">📊 Sets: {{ exercise_info.get('sets', 'N/A') }}</div>
+            <div class="info-item">⏱️ Live Tracking</div>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="video-section">
+            <img id="video-feed" class="video-feed" src="/video_feed" alt="Video Feed">
+            <div class="video-overlay">
+                <div>📹 Live Feed</div>
+                <div id="fps-counter">FPS: --</div>
+            </div>
+        </div>
+
+        <div class="stats-panel">
+            <div class="stats-header">📈 Live Statistics</div>
+            
+            {% if exercise == 'hammer_curl' %}
+                <div class="dual-arm-stats">
+                    <div>
+                        <div class="arm-label">Right Arm</div>
+                        <div class="stat-card counter-display">
+                            <span class="stat-value" id="counter-right">0</span>
+                            <span class="stat-label">Reps</span>
+                        </div>
+                        <div class="stat-card angle-display">
+                            <span class="stat-value" id="angle-right">0°</span>
+                            <span class="stat-label">Angle</span>
+                        </div>
+                        <div class="stat-card stage-display">
+                            <span class="stat-value" id="stage-right">--</span>
+                            <span class="stat-label">Stage</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progress-right"></div>
+                        </div>
+                        <div class="warning-display" id="warning-right">Ready to start</div>
+                    </div>
+                    
+                    <div>
+                        <div class="arm-label">Left Arm</div>
+                        <div class="stat-card counter-display">
+                            <span class="stat-value" id="counter-left">0</span>
+                            <span class="stat-label">Reps</span>
+                        </div>
+                        <div class="stat-card angle-display">
+                            <span class="stat-value" id="angle-left">0°</span>
+                            <span class="stat-label">Angle</span>
+                        </div>
+                        <div class="stat-card stage-display">
+                            <span class="stat-value" id="stage-left">--</span>
+                            <span class="stat-label">Stage</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progress-left"></div>
+                        </div>
+                        <div class="warning-display" id="warning-left">Ready to start</div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="stat-card counter-display">
+                    <span class="stat-value" id="counter">0</span>
+                    <span class="stat-label">Reps Completed</span>
+                </div>
+                
+                <div class="stat-card angle-display">
+                    <span class="stat-value" id="angle">0°</span>
+                    <span class="stat-label">Current Angle</span>
+                </div>
+                
+                <div class="stat-card stage-display">
+                    <span class="stat-value" id="stage">--</span>
+                    <span class="stat-label">Current Stage</span>
+                </div>
+                
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress"></div>
+                </div>
+            {% endif %}
+            
+            <div id="session-stats" class="stat-card" style="background: linear-gradient(45deg, #6366f1, #8b5cf6); margin-top: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <span class="stat-value" id="session-time">00:00</span>
+                        <span class="stat-label">Session Time</span>
+                    </div>
+                    <div>
+                        <span class="stat-value" id="total-reps">0</span>
+                        <span class="stat-label">Total Reps</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button class="control-btn" onclick="window.location.href='/'">🏠 Home</button>
+        <button class="control-btn stop-btn" onclick="stopTracking()">⏹️ Stop</button>
+    </div>
+
+    <script>
+        let sessionStartTime = Date.now();
+        let fpsCounter = 0;
+        let lastFpsTime = Date.now();
+        
+        // Update statistics every 100ms
+        setInterval(updateStats, 100);
+        
+        // Update session time every second
+        setInterval(updateSessionTime, 1000);
+        
+        // Update FPS counter
+        setInterval(updateFPS, 1000);
+        
+        function updateStats() {
+            fetch('/stats')
+                .then(response => response.json())
+                .then(data => {
+                    const exercise = '{{ exercise }}';
+                    
+                    if (exercise === 'hammer_curl') {
+                        // Update right arm stats
+                        document.getElementById('counter-right').textContent = data.counter_right || 0;
+                        document.getElementById('angle-right').textContent = Math.round(data.angle_right || 0) + '°';
+                        document.getElementById('stage-right').textContent = data.stage_right || '--';
+                        document.getElementById('warning-right').textContent = data.warning_right || 'Ready to start';
+                        
+                        // Update left arm stats
+                        document.getElementById('counter-left').textContent = data.counter_left || 0;
+                        document.getElementById('angle-left').textContent = Math.round(data.angle_left || 0) + '°';
+                        document.getElementById('stage-left').textContent = data.stage_left || '--';
+                        document.getElementById('warning-left').textContent = data.warning_left || 'Ready to start';
+                        
+                        // Update progress bars
+                        const progressRight = document.getElementById('progress-right');
+                        const progressLeft = document.getElementById('progress-left');
+                        if (progressRight) progressRight.style.width = (data.progress_right || 0) + '%';
+                        if (progressLeft) progressLeft.style.width = (data.progress_left || 0) + '%';
+                        
+                        // Update total reps
+                        document.getElementById('total-reps').textContent = (data.counter_right || 0) + (data.counter_left || 0);
+                    } else {
+                        // Update single exercise stats
+                        document.getElementById('counter').textContent = data.counter || 0;
+                        document.getElementById('angle').textContent = Math.round(data.angle || 0) + '°';
+                        document.getElementById('stage').textContent = data.stage || '--';
+                        
+                        // Update progress bar based on stage
+                        const progress = document.getElementById('progress');
+                        if (progress) {
+                            const stage = data.stage || 'down';
+                            if (stage === 'up') {
+                                progress.style.width = '100%';
+                            } else if (stage === 'down') {
+                                progress.style.width = '0%';
+                            } else {
+                                progress.style.width = '50%';
+                            }
+                        }
+                        
+                        // Update total reps
+                        document.getElementById('total-reps').textContent = data.counter || 0;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching stats:', error);
+                });
+        }
+        
+        function updateSessionTime() {
+            const elapsed = Math.floor((Date.now() - sessionStartTime) / 1000);
+            const minutes = Math.floor(elapsed / 60);
+            const seconds = elapsed % 60;
+            document.getElementById('session-time').textContent = 
+                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+        
+        function updateFPS() {
+            const now = Date.now();
+            const fps = Math.round(fpsCounter * 1000 / (now - lastFpsTime));
+            document.getElementById('fps-counter').textContent = `FPS: ${fps}`;
+            fpsCounter = 0;
+            lastFpsTime = now;
+        }
+        
+        function stopTracking() {
+            if (confirm('Are you sure you want to stop the tracking session?')) {
+                fetch('/stop_tracking', {
+                    method: 'POST'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    alert('Session stopped successfully!');
+                    window.location.href = '/';
+                })
+                .catch(error => {
+                    console.error('Error stopping session:', error);
+                    window.location.href = '/';
+                });
+            }
+        }
+        
+        // Track video feed loading for FPS counter
+        document.getElementById('video-feed').addEventListener('load', () => {
+            fpsCounter++;
+        });
+        
+        // Handle video feed errors
+        document.getElementById('video-feed').addEventListener('error', (e) => {
+            console.error('Video feed error:', e);
+            e.target.src = '/video_feed?' + Date.now(); // Retry with cache bust
+        });
+        
+        // Prevent right-click context menu on video
+        document.getElementById('video-feed').addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+        });
+        
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                stopTracking();
+            } else if (e.key === 'h' || e.key === 'H') {
+                window.location.href = '/';
+            }
+        });
+        
+        // Add fullscreen capability
+        document.getElementById('video-feed').addEventListener('dblclick', () => {
+            if (document.fullscreenElement) {
+                document.exitFullscreen();
+            } else {
+                document.getElementById('video-feed').requestFullscreen();
+            }
+        });
+        
+        // Show loading message initially
+        window.addEventListener('load', () => {
+            console.log('Fitness tracker loaded successfully');
+            console.log('Exercise type:', '{{ exercise }}');
+            console.log('Keyboard shortcuts: ESC = Stop, H = Home, Double-click video = Fullscreen');
+        });
+    </script>
+</body>
+</html>
